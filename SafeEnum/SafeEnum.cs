@@ -83,8 +83,7 @@ public struct SafeEnum<T> where T : struct, Enum
 
 	public override int GetHashCode() => Val.GetHashCode(); // allocation is impossible
 
-	public override string ToString()
-		=> IsValid ? Val.ToString() : $"invalid({_str})";
+	public override string ToString() => _str;
 }
 
 #if UNITY_EDITOR
