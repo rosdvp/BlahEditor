@@ -39,7 +39,13 @@ public struct SafeEnum<T> where T : struct, Enum
 	/// </summary>
 	public T Val
 	{
-		get => IsValid ? _parsedValue : default;
+		get
+		{
+			if (IsValid)
+				return _parsedValue;
+			Debug.LogWarning($"[blah_editor] parsing failed, backing str: ({_str})");
+			return default;
+		}
 		set
 		{
 			_isParsed    = true;
