@@ -1,12 +1,12 @@
 {
-    "name": "BlahEditor",
+    "name": "BlahEditor.Attributes.Drawers",
     "rootNamespace": "",
     "references": [
-        "GUID:999a09e60c8d77245a2ef3ef03d94e3f",
-        "GUID:2e8ded2872723db41b108c3b052539c5",
-        "GUID:93741b36712ad0a43a4784fa3cf4a24b"
+        "GUID:999a09e60c8d77245a2ef3ef03d94e3f"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
