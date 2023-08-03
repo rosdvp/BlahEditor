@@ -17,15 +17,14 @@ public class InlineSODrawer : PropertyDrawer
 		rect = rect.ToNextLine();
 
 		bool prevEnabled = GUI.enabled;
-		GUI.enabled           =  isEditable;
-		EditorGUI.indentLevel += 1;
+		GUI.enabled = isEditable;
+		rect        = rect.ReduceFromLeft(10);
 		foreach (var p in EnumerateContent(prop))
 		{
 			EditorGUI.PropertyField(rect, p);
 			rect = rect.ToNextLine();
 		}
-		EditorGUI.indentLevel -= 1;
-		GUI.enabled           =  prevEnabled;
+		GUI.enabled = prevEnabled;
 	}
 
 	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
@@ -40,14 +39,10 @@ public class InlineSODrawer : PropertyDrawer
 
 	private IEnumerable<SerializedProperty> EnumerateContent(SerializedProperty prop)
 	{
-		object holder = prop.GetHolderObject();
-		var    member = prop.GetNeighborMember(prop.name);
-
-		var so = (ScriptableObject)((FieldInfo)member).GetValue(holder);
-		if (so == null)
+		if (prop.objectReferenceValue == null)
 			yield break;
 
-		using var serObj = new SerializedObject(so);
+		using var serObj = new SerializedObject(prop.objectReferenceValue);
 		var       iter   = serObj.GetIterator();
 		iter.Next(true);
 		foreach (var p in iter.GetOneLevelChildrenProps())

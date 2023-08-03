@@ -8,10 +8,6 @@ namespace BlahEditor.Attributes.Editor
 {
 public static class SerializedPropertyExtensions
 {
-	/// <summary>
-	/// Use this method when you want to access another member of object.<br/>
-	/// For example, if you want to invoke a method.
-	/// </summary>
 	/// <returns>
 	///	Object in which <paramref name="prop"/> is stored.<br/>
 	/// For example, if <paramref name="prop"/> is a field inside Scriptable Object,
