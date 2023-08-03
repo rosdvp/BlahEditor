@@ -1,6 +1,10 @@
 {
-    "name": "com.rosdvp.blaheditor",
-    "version": "1.0.4",
-    "displayName": "Blah Editor",
-    "description": "Provides a set of custom attributes and editor utils."
+  "name": "com.rosdvp.blaheditor",
+  "version": "1.0.5",
+  "displayName": "Blah Editor",
+  "description": "Provides a set of custom attributes and editor utils.",
+  "author": 
+  {
+    "name": "Blah"
   }
+}

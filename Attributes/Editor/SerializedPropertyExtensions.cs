@@ -49,6 +49,27 @@ public static class SerializedPropertyExtensions
 				return null;
 		return iterator.Current;
 	}
+	
+	//-----------------------------------------------------------
+	//-----------------------------------------------------------
+	public static MemberInfo GetNeighborMember(this SerializedProperty property, string memberName)
+	{
+		object     obj    = property.GetHolderObject();
+		var        type   = obj.GetType();
+		MemberInfo member = null;
+		while (type != null && member == null)
+		{
+			var members = type.GetMember(memberName,
+			                             BindingFlags.Instance
+			                             | BindingFlags.Public
+			                             | BindingFlags.NonPublic
+			);
+			if (members.Length > 0)
+				member = members[0];
+			type = type.BaseType;
+		}
+		return member;
+	}
 
 	//-----------------------------------------------------------
 	//-----------------------------------------------------------
