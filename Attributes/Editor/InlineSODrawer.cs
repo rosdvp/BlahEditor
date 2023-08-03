@@ -42,8 +42,8 @@ public class InlineSODrawer : PropertyDrawer
 		if (prop.objectReferenceValue == null)
 			yield break;
 
-		using var serObj = new SerializedObject(prop.objectReferenceValue);
-		var       iter   = serObj.GetIterator();
+		var serObj = new SerializedObject(prop.objectReferenceValue);
+		var iter   = serObj.GetIterator();
 		iter.Next(true);
 		foreach (var p in iter.GetOneLevelChildrenProps())
 			if (!p.name.StartsWith("m_"))

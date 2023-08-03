@@ -20,7 +20,9 @@ public abstract class SubAssetDrawer : PropertyDrawer
 			: rect.SplitHorizontal(5f, 0.4f, 0.36f, 0.12f, 0.12f);
 
 		EditorGUI.LabelField(rects[0], label.text);
+		
 		EditorGUI.BeginDisabledGroup(true);
+		prop.objectReferenceValue = FindAssetForProp(prop);
 		EditorGUI.PropertyField(rects[1], prop, GUIContent.none);
 		EditorGUI.EndDisabledGroup();
 
@@ -44,7 +46,10 @@ public abstract class SubAssetDrawer : PropertyDrawer
 			{
 				var menu = new GenericMenu();
 				foreach (var type in Types)
-					menu.AddItem(new GUIContent(type.Name), false, () => Create(prop, type));
+					menu.AddItem(new GUIContent(type.Name),
+					             false,
+					             () => Create(prop, type)
+					);
 				menu.ShowAsContext();
 			}
 		}
@@ -57,6 +62,19 @@ public abstract class SubAssetDrawer : PropertyDrawer
 		}
 	}
 
+	private UnityEngine.Object FindAssetForProp(SerializedProperty prop)
+	{
+		var searchName = $"{prop.serializedObject.targetObject.name}&{prop.propertyPath}";
+		
+		string path   = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
+		var assets = AssetDatabase.LoadAllAssetsAtPath(path);
+		foreach (var asset in assets)
+			if (asset.name == searchName)
+				return asset;
+		return null;
+	}
+	
+	
 	private IEnumerable<UnityEngine.Object> FindSubAssets(SerializedProperty prop)
 	{
 		string path      = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
@@ -69,32 +87,33 @@ public abstract class SubAssetDrawer : PropertyDrawer
 	private void Create(SerializedProperty prop, Type type)
 	{
 		var so = ScriptableObject.CreateInstance(type);
+		so.name = $"{prop.serializedObject.targetObject.name}&{prop.propertyPath}";
 
-		string path      = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
-		var    subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
+		//string path      = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
+		//var    subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
 
-		for (var i = 0; i < 10; i++)
-		{
-			var newName = $"{NameStart}_{i}";
-			if (!Array.Exists(subAssets, a => a.name == newName))
-			{
-				so.name = newName;
-				break;
-			}
-		}
+		//for (var i = 0; i < 10; i++)
+		//{
+		//	var newName = $"{NameStart}_{i}";
+		//	if (!Array.Exists(subAssets, a => a.name == newName))
+		//	{
+		//		so.name = newName;
+		//		break;
+		//	}
+		//}
 
 		AssetDatabase.AddObjectToAsset(so, prop.serializedObject.targetObject);
 		AssetDatabase.SaveAssets();
 
-		prop.objectReferenceValue = so;
-		prop.serializedObject.ApplyModifiedProperties();
+		//prop.objectReferenceValue = so;
+		//prop.serializedObject.ApplyModifiedProperties();
 	}
 
 	private void Remove(SerializedProperty prop)
 	{
 		AssetDatabase.RemoveObjectFromAsset(prop.objectReferenceValue);
 
-		prop.objectReferenceValue = null;
+		//prop.objectReferenceValue = null;
 
 		AssetDatabase.SaveAssets();
 	}
