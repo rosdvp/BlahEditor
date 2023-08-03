@@ -53,6 +53,7 @@ public class InlineSODrawer : PropertyDrawer
 		foreach (var p in iter.GetOneLevelChildrenProps())
 			if (!p.name.StartsWith("m_"))
 				yield return p;
+		serObj.ApplyModifiedProperties();
 	}
 }
 }
