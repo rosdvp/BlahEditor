@@ -11,12 +11,13 @@ public class InlineSODrawer : PropertyDrawer
 	public override void OnGUI(Rect rect, SerializedProperty prop, GUIContent label)
 	{
 		bool isEditable = ((InlineSOAttribute)attribute).IsEditable;
-		
+
 		rect = rect.ToSingleLine();
 		EditorGUI.PropertyField(rect, prop, label);
 		rect = rect.ToNextLine();
 
-		EditorGUI.BeginDisabledGroup(!isEditable);
+		bool prevEnabled = GUI.enabled;
+		GUI.enabled           =  isEditable;
 		EditorGUI.indentLevel += 1;
 		foreach (var p in EnumerateContent(prop))
 		{
@@ -24,7 +25,7 @@ public class InlineSODrawer : PropertyDrawer
 			rect = rect.ToNextLine();
 		}
 		EditorGUI.indentLevel -= 1;
-		EditorGUI.EndDisabledGroup();
+		GUI.enabled           =  prevEnabled;
 	}
 
 	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
