@@ -23,6 +23,7 @@ public abstract class SubAssetDrawer : PropertyDrawer
 		
 		EditorGUI.BeginDisabledGroup(true);
 		prop.objectReferenceValue = FindAssetForProp(prop);
+		prop.serializedObject.ApplyModifiedProperties();
 		EditorGUI.PropertyField(rects[1], prop, GUIContent.none);
 		EditorGUI.EndDisabledGroup();
 
