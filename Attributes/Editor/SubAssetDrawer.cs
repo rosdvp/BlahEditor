@@ -10,7 +10,6 @@ namespace BlahEditor.Attributes.Editor
 /// </summary>
 public abstract class SubAssetDrawer : PropertyDrawer
 {
-	protected abstract string              NameStart { get; }
 	protected abstract IReadOnlyList<Type> Types      { get; }
 
 	public override void OnGUI(Rect rect, SerializedProperty prop, GUIContent label)
@@ -22,8 +21,7 @@ public abstract class SubAssetDrawer : PropertyDrawer
 		EditorGUI.LabelField(rects[0], label.text);
 		
 		EditorGUI.BeginDisabledGroup(true);
-		if (prop.objectReferenceValue == null)
-			prop.objectReferenceValue = FindAssetForProp(prop);
+		ValidatePropRef(prop);
 		EditorGUI.PropertyField(rects[1], prop, GUIContent.none);
 		EditorGUI.EndDisabledGroup();
 
@@ -62,20 +60,44 @@ public abstract class SubAssetDrawer : PropertyDrawer
 				Remove(prop);
 		}
 	}
-
-	private UnityEngine.Object FindAssetForProp(SerializedProperty prop)
+	
+	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
 	{
-		var searchName = $"{prop.serializedObject.targetObject.name}&{prop.propertyPath}";
-		
-		string path   = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
-		var assets = AssetDatabase.LoadAllAssetsAtPath(path);
-		foreach (var asset in assets)
-			if (asset.name == searchName)
-				return asset;
-		return null;
+		return EditorGUI.GetPropertyHeight(prop);
 	}
-	
-	
+
+
+	private void ValidatePropRef(SerializedProperty prop)
+	{
+		string assetName = BuildSubAssetName(prop);
+
+		if (prop.objectReferenceValue == null)
+		{
+			string path   = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
+			var    assets = AssetDatabase.LoadAllAssetsAtPath(path);
+			var    asset  = Array.Find(assets, a => a.name == assetName);
+			if (asset != null)
+				prop.objectReferenceValue = asset;
+		}
+		else
+		{
+			var asset = prop.objectReferenceValue;
+			if (asset.name != assetName)
+			{
+				asset.name = assetName;
+
+				//just to refresh Unity UI
+				string path    = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
+				var    tempObj = new TextAsset();
+				AssetDatabase.AddObjectToAsset(tempObj, path);
+				AssetDatabase.SaveAssets();
+				AssetDatabase.Refresh();
+				AssetDatabase.RemoveObjectFromAsset(tempObj);
+			}
+		}
+	}
+
+
 	private IEnumerable<UnityEngine.Object> FindSubAssets(SerializedProperty prop)
 	{
 		string path      = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
@@ -88,40 +110,28 @@ public abstract class SubAssetDrawer : PropertyDrawer
 	private void Create(SerializedProperty prop, Type type)
 	{
 		var so = ScriptableObject.CreateInstance(type);
-		so.name = $"{prop.serializedObject.targetObject.name}&{prop.propertyPath}";
-
-		//string path      = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
-		//var    subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
-
-		//for (var i = 0; i < 10; i++)
-		//{
-		//	var newName = $"{NameStart}_{i}";
-		//	if (!Array.Exists(subAssets, a => a.name == newName))
-		//	{
-		//		so.name = newName;
-		//		break;
-		//	}
-		//}
+		so.name = BuildSubAssetName(prop);
 
 		AssetDatabase.AddObjectToAsset(so, prop.serializedObject.targetObject);
 		AssetDatabase.SaveAssets();
-
-		//prop.objectReferenceValue = so;
-		//prop.serializedObject.ApplyModifiedProperties();
 	}
 
 	private void Remove(SerializedProperty prop)
 	{
 		AssetDatabase.RemoveObjectFromAsset(prop.objectReferenceValue);
 
-		//prop.objectReferenceValue = null;
+		prop.objectReferenceValue = null;
 
 		AssetDatabase.SaveAssets();
 	}
 
-	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
+	private string BuildSubAssetName(SerializedProperty prop)
 	{
-		return EditorGUI.GetPropertyHeight(prop);
+		string[] rawParentName = prop.serializedObject.targetObject.name.Split('&');
+		string   parentName    = rawParentName.Length > 1 ? rawParentName[^1] : null;
+		var      assetName     = $"{parentName}&{prop.propertyPath}";
+
+		return assetName;
 	}
 }
 }
