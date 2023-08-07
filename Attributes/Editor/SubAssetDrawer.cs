@@ -22,7 +22,8 @@ public abstract class SubAssetDrawer : PropertyDrawer
 		EditorGUI.LabelField(rects[0], label.text);
 		
 		EditorGUI.BeginDisabledGroup(true);
-		prop.objectReferenceValue = FindAssetForProp(prop);
+		if (prop.objectReferenceValue == null)
+			prop.objectReferenceValue = FindAssetForProp(prop);
 		EditorGUI.PropertyField(rects[1], prop, GUIContent.none);
 		EditorGUI.EndDisabledGroup();
 
