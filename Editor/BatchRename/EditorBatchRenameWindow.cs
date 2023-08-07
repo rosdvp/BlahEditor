@@ -136,7 +136,7 @@ public class EditorBatchRenameWindow : EditorWindow
 		if (_isToLowerSnakeCase)
 			nameAfter = Regex.Replace(
 				nameAfter,
-				"(?<!^)([A-Z][a-z]|(?<=[a-z])[^a-z]|(?<=[A-Z])[0-9_])",
+				"(?<!^)(([A-Z][a-z])|([A-Z][A-Z]))",
 				"_$1"
 			).ToLower().Replace("__", "_");
 		return (nameBefore, nameAfter);
