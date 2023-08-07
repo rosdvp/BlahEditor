@@ -22,6 +22,10 @@ public class EditorBatchRenameWindow : EditorWindow
 	//-----------------------------------------------------------
 	//-----------------------------------------------------------
 	private string[] _selectedGUIDs;
+
+	private GUIStyle _styleNoChanges;
+	private GUIStyle _styleNameBefore;
+	private GUIStyle _styleNameAfter;
 	
 	private bool    _isIncludeFoldersNames   = true;
 	private bool    _isIncludeFoldersContent = true;
@@ -34,6 +38,15 @@ public class EditorBatchRenameWindow : EditorWindow
 
 	private void OnGUI()
 	{
+		if (_styleNoChanges == null)
+		{
+			_styleNoChanges                   = new GUIStyle(EditorStyles.label);
+			_styleNameBefore                  = new GUIStyle(EditorStyles.label);
+			_styleNameBefore.normal.textColor = new Color(0.7f, 0, 0);
+			_styleNameAfter                   = new GUIStyle(EditorStyles.label);
+			_styleNameAfter.normal.textColor  = new Color(0, 0.7f, 0);
+		}
+		
 		//var styleRightAlign = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight };
 
 		bool prevIncludeFoldersNames   = _isIncludeFoldersNames;
@@ -94,10 +107,11 @@ public class EditorBatchRenameWindow : EditorWindow
 		_scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
 		foreach (string path in _paths)
 		{
-			EditorGUILayout.BeginHorizontal();
 			(string before, string after) = Rename(path);
-			EditorGUILayout.LabelField(before);
-			EditorGUILayout.LabelField(after);
+
+			EditorGUILayout.BeginHorizontal();
+			EditorGUILayout.LabelField(before, before != after ? _styleNameBefore : _styleNoChanges);
+			EditorGUILayout.LabelField(after, before != after ? _styleNameAfter : _styleNoChanges);
 			EditorGUILayout.EndHorizontal();
 		}
 		EditorGUILayout.EndScrollView();
