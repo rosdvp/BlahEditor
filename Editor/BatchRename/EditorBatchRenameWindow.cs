@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,43 +9,71 @@ namespace BlahEditor.Editor.BatchRename
 {
 public class EditorBatchRenameWindow : EditorWindow
 {
-	[MenuItem("Assets/Batch Rename")]
+	[MenuItem("Assets/Blah/Batch Rename")]
 	private static void BatchRename()
 	{
 		var window = GetWindow<EditorBatchRenameWindow>();
-		window._selectedGuids = Selection.assetGUIDs;
+		window._selectedGUIDs = Selection.assetGUIDs;
+		window.FillPathsFromSelected();
+		
 		window.Show();
 	}
 
 	//-----------------------------------------------------------
 	//-----------------------------------------------------------
-	private string[]        _selectedGuids;
-	private bool            _withFolders;
-	private bool            _withFoldersScan;
-	private HashSet<string> _paths;
-	private string          _from;
-	private string          _to;
-	private Vector2         _scrollPos;
+	private string[] _selectedGUIDs;
+	
+	private bool    _isIncludeFoldersNames   = true;
+	private bool    _isIncludeFoldersContent = true;
+	private bool    _isToLowerSnakeCase      = false;
+	private string  _from;
+	private string  _to;
+	private Vector2 _scrollPos;
+	
+	private HashSet<string> _paths = new();
 
 	private void OnGUI()
 	{
-		var styleRightAlign = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight };
-		
-		if (_paths == null)
-			FillPaths();
-		
-		bool prevWithFolders     = _withFolders;
-		bool prevWithFoldersScan = _withFoldersScan;
+		//var styleRightAlign = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight };
+
+		bool prevIncludeFoldersNames   = _isIncludeFoldersNames;
+		bool prevIncludeFoldersContent = _isIncludeFoldersContent;
 		EditorGUILayout.BeginHorizontal();
-		_withFolders = EditorGUILayout.Toggle(GUIContent.none, _withFolders, GUILayout.MaxWidth(20));
+		_isIncludeFoldersNames = EditorGUILayout.Toggle(
+			GUIContent.none,
+			_isIncludeFoldersNames,
+			GUILayout.MaxWidth(20)
+		);
 		EditorGUILayout.LabelField("Rename folders");
 		EditorGUILayout.EndHorizontal();
 		EditorGUILayout.BeginHorizontal();
-		_withFoldersScan = EditorGUILayout.Toggle(GUIContent.none, _withFoldersScan, GUILayout.MaxWidth(20));
+		_isIncludeFoldersContent = EditorGUILayout.Toggle(
+			GUIContent.none,
+			_isIncludeFoldersContent,
+			GUILayout.MaxWidth(20)
+		);
 		EditorGUILayout.LabelField("Include assets from folders");
 		EditorGUILayout.EndHorizontal();
-		if (prevWithFolders != _withFolders || prevWithFoldersScan != _withFoldersScan)
-			FillPaths();
+		if (prevIncludeFoldersNames != _isIncludeFoldersNames ||
+		    prevIncludeFoldersContent != _isIncludeFoldersContent)
+		{
+			FillPathsFromSelected();
+		}
+		
+		EditorGUILayout.BeginHorizontal();
+		_isToLowerSnakeCase = EditorGUILayout.Toggle(
+			GUIContent.none,
+			_isToLowerSnakeCase,
+			GUILayout.MaxWidth(20)
+		);
+		EditorGUILayout.LabelField("To lower_snake_case");
+		EditorGUILayout.EndHorizontal();
+
+		if (GUILayout.Button("Scan"))
+		{
+			_selectedGUIDs = Selection.assetGUIDs;
+			FillPathsFromSelected();
+		}
 
 		EditorGUILayout.BeginHorizontal();
 		EditorGUILayout.LabelField("From", GUILayout.MaxWidth(50));
@@ -56,63 +85,67 @@ public class EditorBatchRenameWindow : EditorWindow
 		if (GUILayout.Button("Rename"))
 		{
 			Rename();
-			FillPaths();
+			FillPathsFromSelected();
 		}
 		EditorGUILayout.EndHorizontal();
 
 		EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 		EditorGUILayout.LabelField("Preview:");
-
 		_scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
 		foreach (string path in _paths)
 		{
-			string nameBefore = path.Split('/')[^1];
-			string nameAfter = IsSettingsValid
-				? nameBefore.Replace(_from, _to)
-				: nameBefore;
-
 			EditorGUILayout.BeginHorizontal();
-			EditorGUILayout.LabelField(nameBefore);
-			EditorGUILayout.LabelField(nameAfter);
+			(string before, string after) = Rename(path);
+			EditorGUILayout.LabelField(before);
+			EditorGUILayout.LabelField(after);
 			EditorGUILayout.EndHorizontal();
 		}
 		EditorGUILayout.EndScrollView();
 	}
 
-	private bool IsSettingsValid => !string.IsNullOrEmpty(_from) && _to != null;
-
 	private void Rename()
 	{
-		if (_paths == null || _paths.Count == 0)
-			throw new Exception("Failed to rename: no assets in selected folder detected");
-		if (!IsSettingsValid)
-			throw new Exception("Failed to rename: settings are invalid");
-		
 		foreach (string path in _paths)
 		{
-			string nameBefore = path.Split('/')[^1];
-			string nameAfter  = nameBefore.Replace(_from, _to);
-			AssetDatabase.RenameAsset(path, nameAfter);
+			(string before, string after) = Rename(path);
+			AssetDatabase.RenameAsset(path, after);
 		}
 	}
 
-	//-----------------------------------------------------------
-	//-----------------------------------------------------------
-	private void FillPaths()
+	private (string nameBefore, string nameAfter) Rename(string path)
 	{
-		_paths = new HashSet<string>();
-		foreach (string guid in _selectedGuids)
+		string nameBefore = path.Split('/')[^1];
+		string nameAfter = !string.IsNullOrEmpty(_from) && !string.IsNullOrEmpty(_from)
+			? nameBefore.Replace(_from, _to)
+			: nameBefore;
+
+		if (_isToLowerSnakeCase)
+			nameAfter = Regex.Replace(
+				nameAfter,
+				"(?<!^)([A-Z][a-z]|(?<=[a-z])[^a-z]|(?<=[A-Z])[0-9_])",
+				"_$1"
+			).ToLower().Replace("__", "_");
+		return (nameBefore, nameAfter);
+	}
+	
+	//-----------------------------------------------------------
+	//-----------------------------------------------------------
+	private void FillPathsFromSelected()
+	{
+		_paths.Clear();
+		
+		foreach (string guid in _selectedGUIDs)
 		{
 			string path = AssetDatabase.GUIDToAssetPath(guid);
 			if (Directory.Exists(path))
 			{
-				if (_withFolders)
-					AddAssetPath(path);
-				if (_withFoldersScan)
+				if (_isIncludeFoldersNames)
+					AddPath(path);
+				if (_isIncludeFoldersContent)
 					FillPathsFromFolderScan(path);
 			}
 			else
-				AddAssetPath(path);
+				AddPath(path);
 		}
 	}
 
@@ -123,17 +156,17 @@ public class EditorBatchRenameWindow : EditorWindow
 			{
 				if (Directory.Exists(path))
 				{
-					if (_withFolders)
-						AddAssetPath(path);
-					if (_withFoldersScan)
+					if (_isIncludeFoldersNames)
+						AddPath(path);
+					if (_isIncludeFoldersContent)
 						FillPathsFromFolderScan(path);
 				}
 				else
-					AddAssetPath(path);
+					AddPath(path);
 			}
 	}
 	
-	private void AddAssetPath(string path)
+	private void AddPath(string path)
 	{
 		_paths.Add(path.Replace('\\', '/'));
 	}
