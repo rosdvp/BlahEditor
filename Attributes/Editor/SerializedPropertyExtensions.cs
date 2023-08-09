@@ -48,7 +48,9 @@ public static class SerializedPropertyExtensions
 	
 	//-----------------------------------------------------------
 	//-----------------------------------------------------------
-	public static MemberInfo GetNeighborMember(this SerializedProperty property, string memberName)
+	/// <returns>Field/Method/Other of the class this property belonging to.</returns>
+	/// <remarks>Useful for validation or "buttons" to find a method.</remarks>
+	public static MemberInfo FindNeighborMember(this SerializedProperty property, string memberName)
 	{
 		object     obj    = property.GetHolderObject();
 		var        type   = obj.GetType();

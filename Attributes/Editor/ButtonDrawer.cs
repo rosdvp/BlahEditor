@@ -16,11 +16,7 @@ public class ButtonDrawer : PropertyDrawer
 		string methodName = ((ButtonAttribute)attribute).MethodName;
 
 		object target = property.GetHolderObject();
-		var method = target.GetType().GetMethod(methodName,
-		                                        BindingFlags.Instance
-		                                        | BindingFlags.Static
-		                                        | BindingFlags.Public
-		                                        | BindingFlags.NonPublic);
+		var    method = (MethodInfo)property.FindNeighborMember(methodName);
 		if (method == null)
 			throw new Exception($"Failed to find method {methodName}");
 		if (method.GetParameters().Length > 0)
