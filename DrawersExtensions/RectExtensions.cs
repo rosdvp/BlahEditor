@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace BlahEditor.Attributes.Editor
+namespace BlahEditor.DrawersExtensions
 {
 public static class RectExtensions
 {
@@ -10,13 +10,16 @@ public static class RectExtensions
 
 	public static Rect ToNextLine(this Rect rect)
 		=> new(rect.x,
-		       rect.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing,
+		       rect.y + rect.height + EditorGUIUtility.standardVerticalSpacing,
 		       rect.width,
 		       rect.height
 		);
 
 	public static Rect WithWidth(this Rect rect, float width) 
 		=> new(rect.x, rect.y, width, rect.height);
+
+	public static Rect WithHeight(this Rect rect, float height)
+		=> new(rect.x, rect.y, rect.width, height);
 
 	public static Rect ReduceFromLeft(this Rect rect, float offset)
 		=> new(rect.x + offset, rect.y, rect.width - offset, rect.height);

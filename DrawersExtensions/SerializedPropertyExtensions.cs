@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace BlahEditor.Attributes.Editor
+namespace BlahEditor.DrawersExtensions
 {
 public static class SerializedPropertyExtensions
 {

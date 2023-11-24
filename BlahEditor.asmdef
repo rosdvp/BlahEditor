@@ -2,7 +2,9 @@
     "name": "BlahEditor",
     "rootNamespace": "",
     "references": [
-        "GUID:999a09e60c8d77245a2ef3ef03d94e3f"
+        "GUID:999a09e60c8d77245a2ef3ef03d94e3f",
+        "GUID:2e8ded2872723db41b108c3b052539c5",
+        "GUID:7e4cdbc2ef998524da8dcbad138e39d5"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

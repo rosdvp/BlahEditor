@@ -1,10 +1,7 @@
 {
-    "name": "BlahEditor.Attributes.Drawers",
+    "name": "BlahEditor.DrawersExtensions",
     "rootNamespace": "",
-    "references": [
-        "GUID:999a09e60c8d77245a2ef3ef03d94e3f",
-        "GUID:7e4cdbc2ef998524da8dcbad138e39d5"
-    ],
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],

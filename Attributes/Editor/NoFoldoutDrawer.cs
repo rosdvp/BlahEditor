@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using BlahEditor.DrawersExtensions;
+using UnityEditor;
 using UnityEngine;
 
 namespace BlahEditor.Attributes.Editor
@@ -10,6 +11,12 @@ public class NoFoldoutDrawer : PropertyDrawer
 
 	public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
 	{
+		if (property.propertyType != SerializedPropertyType.Generic)
+		{
+			EditorGUI.PropertyField(rect, property, label);
+			return;
+		}
+		
 		foreach (var prop in property.GetOneLevelChildrenProps())
 		{
 			rect.height = EditorGUI.GetPropertyHeight(prop);
@@ -20,6 +27,9 @@ public class NoFoldoutDrawer : PropertyDrawer
 
 	public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
 	{
+		if (property.propertyType != SerializedPropertyType.Generic)
+			return EditorGUI.GetPropertyHeight(property, label);
+		
 		var height     = 0f;
 		foreach (var prop in property.GetOneLevelChildrenProps())
 		{
