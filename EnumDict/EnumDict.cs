@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
 using BlahEditor.Attributes.Editor;
 using BlahEditor.DrawersExtensions;
-using UnityEditor;
-using UnityEngine;
+#endif
 
 namespace BlahEditor.EnumDict
 {
@@ -11,7 +13,8 @@ namespace BlahEditor.EnumDict
 /// Must be used only in ScriptableObject classes for read-only purpose.
 /// </summary>
 [Serializable]
-public class EnumDict<TKey, TValue> : Dictionary<TKey, TValue> where TKey : Enum
+public class EnumDict<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
+	where TKey : Enum
 {
 	[SerializeField]
 	private TKey[] _keys;
@@ -54,17 +57,14 @@ public class SerDictDrawer : PropertyDrawer
 		int count = propKeys.arraySize;
 		if (count > 0)
 		{
-			float height = Math.Max(
-				EditorGUI.GetPropertyHeight(propKeys.GetArrayElementAtIndex(0), GUIContent.none),
-				_itemDrawer.GetPropertyHeight(propValues.GetArrayElementAtIndex(0), GUIContent.none)
-			);
-			
 			var seenKeys = new HashSet<int>();
 			
 			for (var i = 0; i < count; i++)
 			{
+				float height = _itemDrawer.GetPropertyHeight(propValues.GetArrayElementAtIndex(i), GUIContent.none);
+				
 				rect = rect.ToNextLine().WithHeight(height);
-				var rectsItem = rect.SplitHorizontal(5, 0.05f, 0.425f, 0.425f, 0.1f);
+				var rectsItem = rect.SplitHorizontal(5, 0.05f, 0.2f, 0.65f, 0.1f);
 
 				int key = propKeys.GetArrayElementAtIndex(i).enumValueIndex;
 				if (seenKeys.Contains(key))
