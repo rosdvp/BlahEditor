@@ -64,7 +64,7 @@ public class SerDictDrawer : PropertyDrawer
 				float height = _itemDrawer.GetPropertyHeight(propValues.GetArrayElementAtIndex(i), GUIContent.none);
 				
 				rect = rect.ToNextLine().WithHeight(height);
-				var rectsItem = rect.SplitHorizontal(5, 0.05f, 0.2f, 0.65f, 0.1f);
+				var rectsItem = rect.SplitHorizontal(15, 0.05f, 0.2f, 0.7f, 0.05f);
 
 				int key = propKeys.GetArrayElementAtIndex(i).enumValueIndex;
 				if (seenKeys.Contains(key))

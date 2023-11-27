@@ -31,11 +31,14 @@ public static class RectExtensions
 	{
 		var   result = new Rect[ratio.Length];
 		float posX   = rect.x;
+
+		float totalWidth = rect.width - (ratio.Length-1) * space;
+		
 		for (var i = 0; i < ratio.Length; i++)
 		{
 			if (i != 0)
 				posX += space;
-			float width = rect.width * ratio[i] - space;
+			float width = totalWidth * ratio[i];
 			result[i] =  new Rect(posX, rect.y, width, rect.height);
 			posX      += width;
 		}
