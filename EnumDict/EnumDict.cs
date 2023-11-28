@@ -28,8 +28,9 @@ public class EnumDict<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCa
 	public void OnAfterDeserialize()
 	{
 		this.Clear();
-		for (var i = 0; i < _keys.Length; i++)
-			this[_keys[i]] = _values[i];
+		if (_keys != null)
+			for (var i = 0; i < _keys.Length; i++)
+				this[_keys[i]] = _values[i];
 	}
 }
 
@@ -112,13 +113,13 @@ public class SerDictDrawer : PropertyDrawer
 		var propValues = prop.FindPropertyRelative("_values");
 		if (_isFoldout)
 		{
-			if (propKeys.arraySize > 0)
+			for (var i = 0; i < propKeys.arraySize; i++)
 			{
 				float itemHeight = Math.Max(
-					EditorGUI.GetPropertyHeight(propKeys.GetArrayElementAtIndex(0), GUIContent.none),
-					_itemDrawer.GetPropertyHeight(propValues.GetArrayElementAtIndex(0), GUIContent.none)
+					EditorGUI.GetPropertyHeight(propKeys.GetArrayElementAtIndex(i), GUIContent.none),
+					_itemDrawer.GetPropertyHeight(propValues.GetArrayElementAtIndex(i), GUIContent.none)
 				);
-				height += (itemHeight + space) * propKeys.arraySize;
+				height += (itemHeight + space);
 			}
 
 			height += EditorGUIUtility.singleLineHeight; // add button
