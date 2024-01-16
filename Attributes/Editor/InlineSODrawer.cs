@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BlahEditor.DrawersExtensions;
 using UnityEditor;
@@ -40,8 +41,12 @@ public class InlineSODrawer : PropertyDrawer
 
 	private IEnumerable<SerializedProperty> EnumerateContent(SerializedProperty prop)
 	{
-		if (prop.objectReferenceValue == null)
-			yield break;
+		try
+		{
+			if (prop.objectReferenceValue == null)
+				yield break;
+		}
+		catch (Exception e) { } // unity 2022 introduced "dispose" bug
 
 		var serObj = new SerializedObject(prop.objectReferenceValue);
 		var iter   = serObj.GetIterator();
