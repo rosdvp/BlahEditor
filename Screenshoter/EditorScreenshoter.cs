@@ -36,7 +36,8 @@ public class EditorScreenshoter : MonoBehaviour
         string screenshotName = $"Screenshot_{DateTime.Now.ToString()}"
                                 .Replace(' ', '_')
                                 .Replace(':', '-')
-                                .Replace('.', '-');
+                                .Replace('.', '-')
+                                .Replace('/', '-');
         ScreenCapture.CaptureScreenshot($"Screenshots/{screenshotName}.png");
         Debug.Log($"Screenshot taken, name: {screenshotName}");
     }
