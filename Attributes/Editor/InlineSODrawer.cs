@@ -23,8 +23,8 @@ public class InlineSODrawer : PropertyDrawer
 		rect        = rect.ReduceFromLeft(10);
 		foreach (var p in EnumerateContent(prop))
 		{
-			rect.height = EditorGUI.GetPropertyHeight(p);
-			EditorGUI.PropertyField(rect, p);
+			rect.height = EditorGUI.GetPropertyHeight(p, true);
+			EditorGUI.PropertyField(rect, p, true);
 			rect.y += rect.height + (rect.height == 0 ? 0 : EditorGUIUtility.standardVerticalSpacing);
 		}
 		GUI.enabled = prevEnabled;
@@ -34,7 +34,7 @@ public class InlineSODrawer : PropertyDrawer
 	{
 		float height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 		foreach (var p in EnumerateContent(prop))
-			height += EditorGUI.GetPropertyHeight(p) + EditorGUIUtility.standardVerticalSpacing;
+			height += EditorGUI.GetPropertyHeight(p, true) + EditorGUIUtility.standardVerticalSpacing;
 		height -= EditorGUIUtility.standardVerticalSpacing;
 		return height;
 	}
