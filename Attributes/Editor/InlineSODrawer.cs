@@ -23,8 +23,9 @@ public class InlineSODrawer : PropertyDrawer
 		rect        = rect.ReduceFromLeft(10);
 		foreach (var p in EnumerateContent(prop))
 		{
+			rect.height = EditorGUI.GetPropertyHeight(p);
 			EditorGUI.PropertyField(rect, p);
-			rect = rect.ToNextLine();
+			rect.y += rect.height + (rect.height == 0 ? 0 : EditorGUIUtility.standardVerticalSpacing);
 		}
 		GUI.enabled = prevEnabled;
 	}
