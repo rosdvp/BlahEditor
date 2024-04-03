@@ -7,19 +7,19 @@ namespace BlahEditor.Attributes.Editor
 public class InfoDrawer : DecoratorDrawer
 {
 	private const float SPACE = 5f;
+
+	private float _height;
 	
 	public override void OnGUI(Rect rect)
 	{
-		string text = GetText();
+		string text = ((InfoAttribute)attribute).Text;
 		rect.height -= SPACE;
 		EditorGUI.HelpBox(rect, text, MessageType.Info);
+
+		_height = GetHelpBoxHeight(text) + SPACE;
 	}
 
-	public override float GetHeight()
-		=> GetHelpBoxHeight(GetText()) + SPACE;
-
-
-	private string GetText() => ((InfoAttribute)attribute).Text;
+	public override float GetHeight() => _height;
 	
 	private float GetHelpBoxHeight(string text)
 	{
