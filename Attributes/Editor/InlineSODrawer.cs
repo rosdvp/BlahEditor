@@ -15,26 +15,31 @@ public class InlineSODrawer : PropertyDrawer
 		bool isEditable = ((InlineSOAttribute)attribute).IsEditable;
 
 		rect = rect.ToSingleLine();
-		EditorGUI.PropertyField(rect, prop, label);
-		rect = rect.ToNextLine();
+		if (!string.IsNullOrEmpty(label.text))
+		{
+			EditorGUI.PropertyField(rect, prop, label);
+			rect = rect.ToNextLine();
+		}
 
-		bool prevEnabled = GUI.enabled;
-		GUI.enabled = isEditable;
-		rect        = rect.ReduceFromLeft(10);
+		EditorGUI.BeginDisabledGroup(!isEditable);
+		rect = rect.ReduceFromLeft(10);
 		foreach (var p in EnumerateContent(prop))
 		{
 			rect.height = EditorGUI.GetPropertyHeight(p, true);
 			EditorGUI.PropertyField(rect, p, true);
 			rect.y += rect.height + (rect.height == 0 ? 0 : EditorGUIUtility.standardVerticalSpacing);
 		}
-		GUI.enabled = prevEnabled;
+		EditorGUI.EndDisabledGroup();
 	}
 
 	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
 	{
-		float height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+		float height = 0;
+		if (!string.IsNullOrEmpty(label.text))
+			height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 		foreach (var p in EnumerateContent(prop))
-			height += EditorGUI.GetPropertyHeight(p, true) + EditorGUIUtility.standardVerticalSpacing;
+			height += EditorGUI.GetPropertyHeight(p, true) + 
+			          EditorGUIUtility.standardVerticalSpacing;
 		height -= EditorGUIUtility.standardVerticalSpacing;
 		return height;
 	}
@@ -42,13 +47,6 @@ public class InlineSODrawer : PropertyDrawer
 
 	private IEnumerable<SerializedProperty> EnumerateContent(SerializedProperty prop)
 	{
-		try
-		{
-			if (prop.objectReferenceValue == null)
-				yield break;
-		}
-		catch (Exception e) { } // unity 2022 introduced "dispose" bug
-
 		var serObj = new SerializedObject(prop.objectReferenceValue);
 		var iter   = serObj.GetIterator();
 		iter.Next(true);

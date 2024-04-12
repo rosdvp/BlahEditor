@@ -44,5 +44,13 @@ public static class RectExtensions
 		}
 		return result;
 	}
+
+	public static Rect CombineAtRight(this Rect rect, Rect other)
+		=> new(
+			rect.x,
+			rect.y,
+			rect.width + (other.x - (rect.x + rect.width)) + other.width,
+			rect.height
+		);
 }
 }

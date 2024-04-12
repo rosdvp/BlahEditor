@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using BlahEditor.DrawersExtensions;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace BlahEditor.Attributes.Editor
 {
@@ -11,62 +13,60 @@ namespace BlahEditor.Attributes.Editor
 /// </summary>
 public abstract class SubAssetDrawer : PropertyDrawer
 {
+	
 	protected abstract IReadOnlyList<Type> Types      { get; }
 
 	public override void OnGUI(Rect rect, SerializedProperty prop, GUIContent label)
 	{
-		var rects = string.IsNullOrEmpty(label.text)
-			? rect.SplitHorizontal(5f, 0.001f, 0.76f, 0.12f, 0.12f)
-			: rect.SplitHorizontal(5f, 0.4f, 0.36f, 0.12f, 0.12f);
-
-		EditorGUI.LabelField(rects[0], label.text);
-		
-		EditorGUI.BeginDisabledGroup(true);
 		ValidatePropRef(prop);
-		EditorGUI.PropertyField(rects[1], prop, GUIContent.none);
-		EditorGUI.EndDisabledGroup();
 
+		var rectHeader = rect.ToSingleLine();
+		var rectsHeader = string.IsNullOrEmpty(label.text) // to support EnumDict
+			? rectHeader.SplitHorizontal(5f, 0.001f, 0.76f, 0.12f, 0.12f)
+			: rectHeader.SplitHorizontal(5f, 0.4f, 0.36f, 0.12f, 0.12f);
+		
+		EditorGUI.LabelField(rectsHeader[0], label.text);
+		EditorGUI.BeginDisabledGroup(true);
+		EditorGUI.ObjectField(rectsHeader[1], prop, GUIContent.none);
+		EditorGUI.EndDisabledGroup();
+		
 		if (prop.objectReferenceValue == null)
 		{
-			if (GUI.Button(rects[2], "sel"))
-			{
-				var menu = new GenericMenu();
-				foreach (var subAsset in FindSubAssets(prop))
-					menu.AddItem(new GUIContent(subAsset.name),
-					             false,
-					             () =>
-					             {
-						             prop.objectReferenceValue = subAsset;
-						             prop.serializedObject.ApplyModifiedProperties();
-					             }
-					);
-				menu.ShowAsContext();
-			}
-			if (GUI.Button(rects[3], "add"))
-			{
-				var menu = new GenericMenu();
-				foreach (var type in Types)
-					menu.AddItem(new GUIContent(type.Name),
-					             false,
-					             () => Create(prop, type)
-					);
-				menu.ShowAsContext();
-			}
+			if (GUI.Button(rectsHeader[2], "sel"))
+				OnSelectTap(prop);
+			if (GUI.Button(rectsHeader[3], "add"))
+				OnAddTap(prop);
 		}
 		else
 		{
-			if (GUI.Button(rects[2], "sel"))
-				prop.objectReferenceValue = null;
-			if (GUI.Button(rects[3], "rem"))
-				Remove(prop);
+			if (IsInlineSO())
+			{
+				var rectInner = rect.ReduceFromTop(
+					rect.ToSingleLine().height + EditorGUIUtility.standardVerticalSpacing
+				);
+				EditorGUI.PropertyField(rectInner, prop, GUIContent.none);
+			}
+
+			if (GUI.Button(rectsHeader[2].CombineAtRight(rectsHeader[3]), "rem"))
+				OnRemoveTap(prop);
 		}
-	}
-	
-	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
-	{
-		return EditorGUI.GetPropertyHeight(prop);
+		
+		prop.serializedObject.ApplyModifiedProperties();
 	}
 
+	public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
+	{
+		float height = EditorGUIUtility.singleLineHeight;
+		if (prop.objectReferenceValue != null && IsInlineSO())
+			height += EditorGUIUtility.standardVerticalSpacing +
+			          EditorGUI.GetPropertyHeight(prop, GUIContent.none);
+		return height;
+	}
+
+	private bool IsInlineSO()
+	{
+		return fieldInfo.GetCustomAttribute<InlineSOAttribute>() != null;
+	}
 
 	private void ValidatePropRef(SerializedProperty prop)
 	{
@@ -84,22 +84,39 @@ public abstract class SubAssetDrawer : PropertyDrawer
 		{
 			var asset = prop.objectReferenceValue;
 			if (asset.name != assetName)
-			{
-				asset.name = assetName;
-
-				//just to refresh Unity UI
-				string path    = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
-				var    tempObj = new TextAsset();
-				AssetDatabase.AddObjectToAsset(tempObj, path);
-				AssetDatabase.SaveAssets();
-				AssetDatabase.Refresh();
-				AssetDatabase.RemoveObjectFromAsset(tempObj);
-			}
+				prop.objectReferenceValue = null;
 		}
 	}
 
 
-	private IEnumerable<UnityEngine.Object> FindSubAssets(SerializedProperty prop)
+	private void OnAddTap(SerializedProperty prop)
+	{
+		var menu = new GenericMenu();
+		foreach (var type in Types)
+			menu.AddItem(
+				new GUIContent(type.Name),
+				false,
+				() => OnCreateTap(prop, type)
+			);
+		menu.ShowAsContext();
+	}
+
+	private void OnSelectTap(SerializedProperty prop)
+	{
+		var menu = new GenericMenu();
+		foreach (var subAsset in FindSubAssets(prop))
+			menu.AddItem(
+				new GUIContent(subAsset.name),
+				false,
+				() =>
+				{
+					subAsset.name = BuildSubAssetName(prop);
+				}
+			);
+		menu.ShowAsContext();
+	}
+    
+	private IEnumerable<Object> FindSubAssets(SerializedProperty prop)
 	{
 		string path      = AssetDatabase.GetAssetPath(prop.serializedObject.targetObject);
 		var    subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
@@ -108,22 +125,20 @@ public abstract class SubAssetDrawer : PropertyDrawer
 				yield return subAsset;
 	}
 
-	private void Create(SerializedProperty prop, Type type)
+	private void OnCreateTap(SerializedProperty prop, Type type)
 	{
 		var so = ScriptableObject.CreateInstance(type);
 		so.name = BuildSubAssetName(prop);
 
 		AssetDatabase.AddObjectToAsset(so, prop.serializedObject.targetObject);
-		AssetDatabase.SaveAssets();
+		EditorUtility.SetDirty(so);
+		AssetDatabase.SaveAssetIfDirty(so);
 	}
 
-	private void Remove(SerializedProperty prop)
+	private void OnRemoveTap(SerializedProperty prop)
 	{
 		AssetDatabase.RemoveObjectFromAsset(prop.objectReferenceValue);
-
 		prop.objectReferenceValue = null;
-
-		AssetDatabase.SaveAssets();
 	}
 
 	private string BuildSubAssetName(SerializedProperty prop)
