@@ -1,8 +1,8 @@
 ﻿using UnityEditor;
 
-namespace BlahEditor.Editor.SubAssets
+namespace BlahEditor.Editor
 {
-public static class EditorSubAssetsRemovePopup
+public static class EditorSubAssetsRemoveMenu
 {
 	[MenuItem("Assets/Blah/Remove selected SubAssets")]
 	public static void RemoveSelected()

@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace BlahEditor.Editor.AssetsConsistence
+namespace BlahEditor.Editor
 {
 public class EditorAssetsConsistenceWindow : EditorWindow
 {
