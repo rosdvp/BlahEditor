@@ -1,12 +1,10 @@
-﻿#if UNITY_EDITOR
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace BlahEditor.Helpers
 {
+#if UNITY_EDITOR
 /// <summary>
 /// This class is not in Editor folder because it might be used by MonoBeh test methods.
 /// </summary>
@@ -57,5 +55,5 @@ public static class BlahEditorHelper
 		return result;
 	}
 }
-}
 #endif
+}
