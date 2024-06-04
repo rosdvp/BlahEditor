@@ -4,12 +4,12 @@ using Object = UnityEngine.Object;
 
 namespace BlahEditor.Helpers
 {
-#if UNITY_EDITOR
 /// <summary>
 /// This class is not in Editor folder because it might be used by MonoBeh test methods.
 /// </summary>
 public static class BlahEditorHelper
 {
+#if UNITY_EDITOR
 	/// <param name="filter">Asset name template.</param>
 	/// <param name="result">First found asset.</param>
 	/// <param name="isMultipleFound">True, if multiple assets have been found.</param>
@@ -54,6 +54,6 @@ public static class BlahEditorHelper
 		}
 		return result;
 	}
-}
 #endif
+}
 }
