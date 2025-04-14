@@ -10,15 +10,19 @@ namespace BlahEditor.Editor
 public class EditorAssetsConsistenceWindow : EditorWindow
 {
 	[MenuItem("Assets/Blah/Check Assets Consistence")]
-	private static void Check()
+	private static void ShowWindow()
 	{
 		var window = GetWindow<EditorAssetsConsistenceWindow>();
-		window.Check(Selection.assetGUIDs[0]);
+		window._selectedGuid = Selection.assetGUIDs[0];
 		window.Show();
 	}
 
 	//-----------------------------------------------------------
 	//-----------------------------------------------------------
+	private string _selectedGuid;
+	
+	private string _assetsNamePrefix;
+	
 	private Vector2 _scrollPos;
 
 	private List<UnityEngine.Object> _assets = new();
@@ -27,8 +31,17 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 
 	private void OnGUI()
 	{
-		_scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
+		EditorGUILayout.BeginHorizontal();
+		
+		_assetsNamePrefix = EditorGUILayout.TextField("Assets Names Prefix", _assetsNamePrefix);
 
+		if (GUILayout.Button("Check"))
+			Check();
+		
+		EditorGUILayout.EndHorizontal();
+		
+		_scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
+		
 		foreach (string issue in _issues)
 			EditorGUILayout.LabelField(issue);
 
@@ -36,15 +49,16 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 	}
 
 
-	private void Check(string selectedGuid)
+	private void Check()
 	{
-		string   folderPath  = AssetDatabase.GUIDToAssetPath(selectedGuid);
+		string   folderPath  = AssetDatabase.GUIDToAssetPath(_selectedGuid);
 		string[] assetsPaths = Directory.GetFiles(folderPath, "*.asset", SearchOption.AllDirectories);
 
 		_assets.Clear();
 		foreach (string path in assetsPaths)
 			_assets.AddRange(AssetDatabase.LoadAllAssetsAtPath(path));
 
+		_issues.Clear();
 		foreach (var asset in _assets)
 			CheckObj(asset, asset);
 	}
@@ -55,7 +69,9 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 		if (!ReferenceEquals(rootUnityObj, obj) && type.IsSubclassOf(typeof(ScriptableObject)))
 		{
 			var unityObj = (UnityEngine.Object)obj;
-			return _assets.Contains(unityObj);
+			if (!string.IsNullOrWhiteSpace(_assetsNamePrefix) && unityObj.name.StartsWith(_assetsNamePrefix))
+				return _assets.Contains(unityObj);
+			return true;
 		}
 
 		while (type != null && type.FullName?.StartsWith("System.") != true)
