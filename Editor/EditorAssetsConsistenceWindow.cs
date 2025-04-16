@@ -66,7 +66,10 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 				if (iter.propertyType != SerializedPropertyType.ObjectReference)
 					continue;
 				
-				if (!string.IsNullOrWhiteSpace(_refAssetNamePrefix) && 
+				if (iter.objectReferenceValue == null)
+					continue;
+				
+				if (!string.IsNullOrWhiteSpace(_refAssetNamePrefix) &&
 				    !iter.objectReferenceValue.name.StartsWith(_refAssetNamePrefix))
 					continue;
 
