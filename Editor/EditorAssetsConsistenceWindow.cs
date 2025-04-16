@@ -69,7 +69,7 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 		if (!ReferenceEquals(rootUnityObj, obj) && type.IsSubclassOf(typeof(ScriptableObject)))
 		{
 			var unityObj = (UnityEngine.Object)obj;
-			if (!string.IsNullOrWhiteSpace(_assetsNamePrefix) && unityObj.name.StartsWith(_assetsNamePrefix))
+			if (string.IsNullOrWhiteSpace(_assetsNamePrefix) || unityObj.name.StartsWith(_assetsNamePrefix))
 				return _assets.Contains(unityObj);
 			return true;
 		}
