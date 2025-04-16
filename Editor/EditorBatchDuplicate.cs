@@ -33,8 +33,10 @@ public static class EditorBatchDuplicate
 					continue;
 
 				string oldPath = AssetDatabase.GetAssetPath(iter.objectReferenceValue);
-				string newPath = newFolderPath + oldPath[oldFolderPath.Length..];
+				if (!oldPath.StartsWith(oldFolderPath))
+					continue;
 
+				string newPath = newFolderPath + oldPath[oldFolderPath.Length..];
 				if (File.Exists(newPath))
 					iter.objectReferenceValue = AssetDatabase.LoadAssetAtPath<Object>(newPath);
 			}
