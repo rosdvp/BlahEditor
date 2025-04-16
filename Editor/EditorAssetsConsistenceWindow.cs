@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,19 +18,18 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 	//-----------------------------------------------------------
 	private string _selectedGuid;
 	
-	private string _assetsNamePrefix;
+	private string _refAssetNamePrefix;
 	
 	private Vector2 _scrollPos;
 
-	private List<UnityEngine.Object> _assets = new();
-	private List<string>             _issues = new();
+	private List<string> _issues = new();
 
 
 	private void OnGUI()
 	{
 		EditorGUILayout.BeginHorizontal();
 		
-		_assetsNamePrefix = EditorGUILayout.TextField("Assets Names Prefix", _assetsNamePrefix);
+		_refAssetNamePrefix = EditorGUILayout.TextField("Reference Asset Name Prefix", _refAssetNamePrefix);
 
 		if (GUILayout.Button("Check"))
 			Check();
@@ -51,71 +47,37 @@ public class EditorAssetsConsistenceWindow : EditorWindow
 
 	private void Check()
 	{
-		string   folderPath  = AssetDatabase.GUIDToAssetPath(_selectedGuid);
-		string[] assetsPaths = Directory.GetFiles(folderPath, "*.asset", SearchOption.AllDirectories);
-
-		_assets.Clear();
-		foreach (string path in assetsPaths)
-			_assets.AddRange(AssetDatabase.LoadAllAssetsAtPath(path));
-
 		_issues.Clear();
-		foreach (var asset in _assets)
-			CheckObj(asset, asset);
-	}
+		
+		string folderPath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
 
-	private bool CheckObj(UnityEngine.Object rootUnityObj, object obj)
-	{
-		var type = obj.GetType();
-		if (!ReferenceEquals(rootUnityObj, obj) && type.IsSubclassOf(typeof(ScriptableObject)))
+		string[] guids = AssetDatabase.FindAssets("t:ScriptableObject", new[] { folderPath });
+		foreach (string guid in guids)
 		{
-			var unityObj = (UnityEngine.Object)obj;
-			if (string.IsNullOrWhiteSpace(_assetsNamePrefix) || unityObj.name.StartsWith(_assetsNamePrefix))
-				return _assets.Contains(unityObj);
-			return true;
-		}
+			string soPath = AssetDatabase.GUIDToAssetPath(guid);
+			var    so   = AssetDatabase.LoadAssetAtPath<ScriptableObject>(soPath);
 
-		while (type != null && type.FullName?.StartsWith("System.") != true)
-		{
-			var fields = obj.GetType().GetFields(BindingFlags.Instance |
-			                                     BindingFlags.Public |
-			                                     BindingFlags.NonPublic
-			);
-
-			foreach (var field in fields)
+			using var ser  = new SerializedObject(so);
+			var       iter = ser.GetIterator();
+			iter.NextVisible(true);  // skip Base
+			iter.NextVisible(false); // skip m_Script
+			do
 			{
-				object fieldValue = field.GetValue(obj);
-				if (fieldValue == null)
+				if (iter.propertyType != SerializedPropertyType.ObjectReference)
 					continue;
-				if (field.FieldType.IsArray)
-				{
-					foreach (object fieldValueArrayItem in (Array)fieldValue)
-						if (fieldValueArrayItem != null)
-						{
-							if (!CheckObj(rootUnityObj, fieldValueArrayItem))
-							{
-								var unityObj = (UnityEngine.Object)fieldValueArrayItem;
-								_issues.Add($"{AssetDatabase.GetAssetPath(rootUnityObj)} | " +
-								            $"{field.Name} | {AssetDatabase.GetAssetPath(unityObj)}"
-								);
-							}
-						}
-				}
-				else
-				{
-					if (!CheckObj(rootUnityObj, fieldValue))
-					{
-						var unityObj = (UnityEngine.Object)fieldValue;
-						_issues.Add($"{AssetDatabase.GetAssetPath(rootUnityObj)} | " +
-						            $"{field.Name} | {AssetDatabase.GetAssetPath(unityObj)}"
-						);
-					}
-				}
+				
+				if (!string.IsNullOrWhiteSpace(_refAssetNamePrefix) && 
+				    !iter.objectReferenceValue.name.StartsWith(_refAssetNamePrefix))
+					continue;
+
+				string refObjPath = AssetDatabase.GetAssetPath(iter.objectReferenceValue);
+				if (refObjPath.StartsWith(folderPath))
+					continue;
+				
+				_issues.Add($"{soPath} | {iter.propertyPath} | {refObjPath}");
 			}
-
-			type = type.BaseType;
+			while (iter.NextVisible(true));
 		}
-
-		return true;
 	}
 }
 }
